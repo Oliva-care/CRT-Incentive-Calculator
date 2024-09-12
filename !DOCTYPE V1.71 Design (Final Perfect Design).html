@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incentive Calculator</title>
+    <style>
+        /* Basic page layout */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: auto; /* Enable scrolling on the body */
+        }
+
+        /* Centered container */
+        .calculator-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px; /* Max width for large screens */
+            box-sizing: border-box;
+        }
+
+        /* Heading style */
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 20px;
+            font-size: 20px; /* Smaller heading font size */
+            font-weight: 600;
+        }
+
+        /* Grid layout for form fields */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px; /* Space between grid items */
+            align-items: center; /* Align items vertically in the center */
+        }
+
+        /* Label and input styles */
+        label, select {
+            display: block;
+            color: #495057;
+            font-weight: 500;
+            font-size: 14px; /* Smaller label font size */
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px; /* Smaller padding for inputs */
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px; /* Smaller input font size */
+        }
+
+        /* Button style */
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 8px; /* Smaller padding for button */
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px; /* Smaller button font size */
+            font-weight: 500;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Result display style */
+        #result {
+            background-color: #f1f1f1;
+            padding: 12px; /* Smaller padding for result */
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            color: #495057;
+            font-size: 14px; /* Smaller result font size */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Highlighting styles */
+        .highlight {
+            background-color: #e2e3e5;
+            border-radius: 4px;
+            padding: 4px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px; /* Smaller table font size */
+        }
+
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px; /* Smaller padding for table cells */
+            text-align: center;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        caption {
+            font-size: 14px; /* Smaller caption font size */
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script>
+        // Format number using Indian numbering system
+        function formatNumberIndian(number) {
+            return new Intl.NumberFormat('en-IN').format(number);
+        }
+
+        // Remove formatting and convert to number
+        function unformatNumber(value) {
+            return parseFloat(value.replace(/,/g, '')) || 0;
+        }
+
+        // Function to format input value with commas
+        function formatInput(value) {
+            return formatNumberIndian(unformatNumber(value)).toString();
+        }
+
+        // Handle input formatting on input events
+        function handleInput(event) {
+            let value = event.target.value;
+            // Replace non-digit characters except commas
+            value = value.replace(/[^0-9,]/g, '');
+            event.target.value = formatInput(value);
+        }
+
+        // Function to calculate Achievement Percentage and handle additional fields
+        function calculatePercentage() {
+            // Get the values from the input fields
+            const target = unformatNumber(document.getElementById('target').value);
+            const achievement = unformatNumber(document.getElementById('achievement').value);
+            const existingClientServiceRevenue = unformatNumber(document.getElementById('existingClientServiceRevenue').value);
+            const newClientServiceRevenue = unformatNumber(document.getElementById('newClientServiceRevenue').value);
+            
+            // Check if the input is valid
+            if (isNaN(target) || isNaN(achievement) || isNaN(existingClientServiceRevenue) || isNaN(newClientServiceRevenue) || target === 0) {
+                document.getElementById('result').innerText = "Please enter valid numbers and ensure target is not zero!";
+                return;
+            }
+
+            // Check if existing client service revenue + new client service revenue exceeds achievement
+            if ((existingClientServiceRevenue + newClientServiceRevenue) > achievement) {
+                document.getElementById('result').innerText = "The sum of Existing Client Service Revenue and New Client Service Revenue cannot exceed Achievement!";
+                return;
+            }
+
+            // Perform the calculation for achievement percentage
+            const percentage = Math.floor((achievement / target) * 100);
+
+            // Calculate the sum of Existing Client Service Revenue and New Client Service Revenue
+            const totalServiceRevenue = existingClientServiceRevenue + newClientServiceRevenue;
+
+            // Calculate incentives based on designation
+            let existingClientIncentive = 0;
+            let newClientIncentive = 0;
+
+            // Define percentage ranges
+            let existingClientRevRate = 0;
+            let newClientRevRate = 0;
+
+            const designation = document.getElementById('designation').value;
+
+            if (designation === 'CM') {
+                if (percentage >= 110) {
+                    existingClientRevRate = target >= 4500000 ? 1.50 : 1.10;
+                    newClientRevRate = target >= 4500000 ? 1.20 : 0.80;
+                } else if (percentage >= 100) {
+                    existingClientRevRate = target >= 4500000 ? 1.20 : 1.00;
+                    newClientRevRate = target >= 4500000 ? 0.80 : 0.70;
+                } else if (percentage >= 90) {
+                    existingClientRevRate = target >= 4500000 ? 0.80 : 0.90;
+                    newClientRevRate = target >= 4500000 ? 0.60 : 0.60;
+                } else if (percentage >= 80) {
+                    existingClientRevRate = target >= 4500000 ? 0.75 : 0.80;
+                    newClientRevRate = target >= 4500000 ? 0.40 : 0.50;
+                } else if (percentage >= 70) {
+                    existingClientRevRate = target >= 4500000 ? 0.60 : 0.70;
+                    newClientRevRate = target >= 4500000 ? 0.30 : 0.40;
+                }
+            } else if (designation === 'CRM') {
+                if (percentage >= 110) {
+                    existingClientRevRate = target >= 4500000 ? 1.50 : 0.90;
+                    newClientRevRate = target >= 4500000 ? 1.20 : 0.70;
+                } else if (percentage >= 100) {
+                    existingClientRevRate = target >= 4500000 ? 1.20 : 0.80;
+                    newClientRevRate = target >= 4500000 ? 0.75 : 0.60;
+                } else if (percentage >= 90) {
+                    existingClientRevRate = target >= 4500000 ? 0.75 : 0.70;
+                    newClientRevRate = target >= 4500000 ? 0.50 : 0.50;
+                } else if (percentage >= 80) {
+                    existingClientRevRate = target >= 4500000 ? 0.50 : 0.60;
+                    newClientRevRate = target >= 4500000 ? 0.30 : 0.40;
+                } else if (percentage >= 70) {
+                    existingClientRevRate = target >= 4500000 ? 0.40 : 0.50;
+                    newClientRevRate = target >= 4500000 ? 0.20 : 0.30;
+                }
+            } else if (designation === 'ACM') {
+                if (percentage >= 110) {
+                    existingClientRevRate = target >= 4500000 ? 0.80 : 0.70;
+                    newClientRevRate = target >= 4500000 ? 0.60 : 0.60;
+                } else if (percentage >= 100) {
+                    existingClientRevRate = target >= 4500000 ? 0.60 : 0.60;
+                    newClientRevRate = target >= 4500000 ? 0.40 : 0.50;
+                } else if (percentage >= 90) {
+                    existingClientRevRate = target >= 4500000 ? 0.30 : 0.50;
+                    newClientRevRate = target >= 4500000 ? 0.20 : 0.40;
+                } else if (percentage >= 80) {
+                    existingClientRevRate = target >= 4500000 ? 0.20 : 0.40;
+                    newClientRevRate = target >= 4500000 ? 0.10 : 0.30;
+                } else if (percentage >= 70) {
+                    existingClientRevRate = target >= 4500000 ? 0.10 : 0.30;
+                    newClientRevRate = target >= 4500000 ? 0.08 : 0.20;
+                }
+            }
+
+            existingClientIncentive = (existingClientServiceRevenue * existingClientRevRate) / 100;
+            newClientIncentive = (newClientServiceRevenue * newClientRevRate) / 100;
+
+            // Total Incentive
+            const totalIncentive = existingClientIncentive + newClientIncentive;
+
+            // Display result
+            document.getElementById('result').innerHTML = `
+Target: ₹${formatNumberIndian(target)}
+Achievement: ${percentage}%
+Existing Client Service Revenue: ₹${formatNumberIndian(existingClientServiceRevenue)}
+New Client Service Revenue: ₹${formatNumberIndian(newClientServiceRevenue)}
+Existing Client Incentive: <span class="highlight">₹${formatNumberIndian(existingClientIncentive.toFixed(2))}</span>
+New Client Incentive: <span class="highlight">₹${formatNumberIndian(newClientIncentive.toFixed(2))}</span>
+Total Incentive: <span class="highlight">₹${formatNumberIndian(totalIncentive.toFixed(2))}</span>
+            `;
+
+            // Update the table
+            updateIncentiveTable(designation);
+        }
+
+        // Update the incentive table based on the designation
+        function updateIncentiveTable(designation) {
+            const tableBody = document.getElementById('incentiveTableBody');
+            let rows = '';
+
+            if (designation === 'CM') {
+                rows = `
+                    <tr>
+                        <td>70%-79%</td>
+                        <td>0.70%</td>
+                        <td>0.40%</td>
+                        <td>0.60%</td>
+                        <td>0.30%</td>
+                    </tr>
+                    <tr>
+                        <td>80%-89%</td>
+                        <td>0.80%</td>
+                        <td>0.50%</td>
+                        <td>0.75%</td>
+                        <td>0.40%</td>
+                    </tr>
+                    <tr>
+                        <td>90%-99%</td>
+                        <td>0.90%</td>
+                        <td>0.60%</td>
+                        <td>0.80%</td>
+                        <td>0.60%</td>
+                    </tr>
+                    <tr>
+                        <td>100%-109%</td>
+                        <td>1.00%</td>
+                        <td>0.70%</td>
+                        <td>1.20%</td>
+                        <td>0.80%</td>
+                    </tr>
+                    <tr>
+                        <td>110% and above</td>
+                        <td>1.10%</td>
+                        <td>0.80%</td>
+                        <td>1.50%</td>
+                        <td>1.20%</td>
+                    </tr>
+                `;
+            } else if (designation === 'CRM') {
+                rows = `
+                    <tr>
+                        <td>70%-79%</td>
+                        <td>0.50%</td>
+                        <td>0.30%</td>
+                        <td>0.40%</td>
+                        <td>0.20%</td>
+                    </tr>
+                    <tr>
+                        <td>80%-89%</td>
+                        <td>0.60%</td>
+                        <td>0.40%</td>
+                        <td>0.50%</td>
+                        <td>0.30%</td>
+                    </tr>
+                    <tr>
+                        <td>90%-99%</td>
+                        <td>0.70%</td>
+                        <td>0.50%</td>
+                        <td>0.75%</td>
+                        <td>0.50%</td>
+                    </tr>
+                    <tr>
+                        <td>100%-109%</td>
+                        <td>0.80%</td>
+                        <td>0.60%</td>
+                        <td>1.00%</td>
+                        <td>0.75%</td>
+                    </tr>
+                    <tr>
+                        <td>110% and above</td>
+                        <td>0.90%</td>
+                        <td>0.70%</td>
+                        <td>1.20%</td>
+                        <td>1.00%</td>
+                    </tr>
+                `;
+            } else if (designation === 'ACM') {
+                rows = `
+                    <tr>
+                        <td>70%-79%</td>
+                        <td>0.30%</td>
+                        <td>0.20%</td>
+                        <td>0.10%</td>
+                        <td>0.08%</td>
+                    </tr>
+                    <tr>
+                        <td>80%-89%</td>
+                        <td>0.40%</td>
+                        <td>0.30%</td>
+                        <td>0.20%</td>
+                        <td>0.10%</td>
+                    </tr>
+                    <tr>
+                        <td>90%-99%</td>
+                        <td>0.50%</td>
+                        <td>0.40%</td>
+                        <td>0.30%</td>
+                        <td>0.20%</td>
+                    </tr>
+                    <tr>
+                        <td>100%-109%</td>
+                        <td>0.60%</td>
+                        <td>0.50%</td>
+                        <td>0.60%</td>
+                        <td>0.40%</td>
+                    </tr>
+                    <tr>
+                        <td>110% and above</td>
+                        <td>0.70%</td>
+                        <td>0.60%</td>
+                        <td>0.80%</td>
+                        <td>0.60%</td>
+                    </tr>
+                `;
+            }
+
+            tableBody.innerHTML = rows;
+        }
+    </script>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>Incentive Calculator</h1>
+        <div class="form-grid">
+            <div>
+                <label for="designation">Designation</label>
+                <select id="designation" onchange="calculatePercentage()">
+                    <option value="CM">CM</option>
+                    <option value="CRM">CRM</option>
+                    <option value="ACM">ACM</option>
+                </select>
+            </div>
+            <div>
+                <label for="target">Target</label>
+                <input type="text" id="target" oninput="handleInput(event)">
+            </div>
+            <div>
+                <label for="achievement">Achievement</label>
+                <input type="text" id="achievement" oninput="handleInput(event)">
+            </div>
+            <div>
+                <label for="existingClientServiceRevenue">Existing Client Service Revenue</label>
+                <input type="text" id="existingClientServiceRevenue" oninput="handleInput(event)">
+            </div>
+            <div>
+                <label for="newClientServiceRevenue">New Client Service Revenue</label>
+                <input type="text" id="newClientServiceRevenue" oninput="handleInput(event)">
+            </div>
+        </div>
+        <button onclick="calculatePercentage()">Calculate Incentives</button>
+        <div id="result"></div>
+        <table>
+            <caption>Incentive Rates by Designation</caption>
+            <thead>
+                <tr>
+                    <th>Achievement %</th>
+                    <th colspan="2">Target below ₹45,00,000</th>
+                    <th colspan="2">Target ≥ ₹45,00,000</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>Existing Clients Rev</th>
+                    <th>New Clients Rev</th>
+                    <th>Existing Clients Rev</th>
+                    <th>New Clients Rev</th>
+                </tr>
+            </thead>
+            <tbody id="incentiveTableBody">
+                <!-- Table rows will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
